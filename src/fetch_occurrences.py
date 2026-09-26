@@ -14,13 +14,16 @@ import requests
 GBIF = "https://api.gbif.org/v1"
 OUT = Path(__file__).resolve().parents[1] / "docs" / "data" / "occurrences.geojson"
 
+# Island species first, catch-all A. marmoratus LAST: a record filed under an old
+# subspecies name (e.g. A. marmoratus desiradei) can match both taxa, and dedup keeps
+# the first hit — so the specific islet species should win.
 TAXA = [
-    "Anolis marmoratus",
     "Anolis ferreus",
     "Anolis terraealtae",
     "Anolis kahouannensis",
     "Anolis chrysops",
     "Anolis desiradei",
+    "Anolis marmoratus",
 ]
 
 # Guadeloupe archipelago bounding box (lon/lat), incl. Marie-Galante, Les Saintes, La Désirade
