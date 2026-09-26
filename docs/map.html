@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ANOLE-WATCH</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root {
+    --navy: #0b1622; --panel: #111f2e; --line: #1e3246;
+    --teal: #2dd4bf; --text: #d7e3ee; --muted: #7f95aa;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--navy); color: var(--text);
+    font: 14px/1.5 -apple-system, "Segoe UI", Inter, sans-serif; }
+  #app { display: grid; grid-template-columns: 320px 1fr; height: 100%; }
+  aside { background: var(--panel); border-right: 1px solid var(--line); padding: 20px; overflow-y: auto; }
+  h1 { margin: 0; font-size: 20px; letter-spacing: .08em; color: var(--teal); }
+  .sub { color: var(--muted); margin: 4px 0 18px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 20px 0 8px; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; user-select: none; }
+  .row.off { opacity: .35; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; border: 1px solid #0006; }
+  .row em { flex: 1; }
+  .count { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 20px; border-top: 1px solid var(--line); padding-top: 12px; }
+  #map { height: 100%; background: var(--navy); }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--text); }
+  .leaflet-popup-content a { color: var(--teal); }
+  @media (max-width: 720px) {
+    #app { grid-template-columns: 1fr; grid-template-rows: auto 60vh; }
+    aside { border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside>
+    <h1>🦎 ANOLE-WATCH</h1>
+    <div class="sub">Anolis marmoratus complex · Guadeloupe archipelago</div>
+    <a href="index.html" style="color:var(--teal);font-size:12px">← Read the story: Six islands, six lizards</a>
+    <h2>Species (click to toggle)</h2>
+    <div id="legend"></div>
+    <div class="note" id="status">Loading occurrences…</div>
+    <div class="note">Occurrence data: <a style="color:var(--teal)" href="https://www.gbif.org">GBIF</a>, refreshed weekly by GitHub Actions. Sentinel-2 habitat layer coming soon.</div>
+  </aside>
+  <div id="map"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const COLORS = {
+  "Anolis marmoratus":    "#2dd4bf",
+  "Anolis ferreus":       "#f59e0b",
+  "Anolis terraealtae":   "#a78bfa",
+  "Anolis kahouannensis": "#f472b6",
+  "Anolis chrysops":      "#facc15",
+  "Anolis desiradei":     "#60a5fa",
+};
+const ISLETS = [
+  ["Basse-Terre", 16.05, -61.68], ["Grande-Terre", 16.33, -61.45],
+  ["Marie-Galante", 15.93, -61.26], ["Les Saintes", 15.86, -61.61],
+  ["La Désirade", 16.31, -61.07], ["Petite Terre", 16.17, -61.12],
+  ["Îlet Kahouanne", 16.36, -61.78],
+];
+
+const map = L.map("map", { zoomControl: true }).setView([16.15, -61.4], 10);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18,
+}).addTo(map);
+
+ISLETS.forEach(([name, lat, lon]) =>
+  L.marker([lat, lon], { icon: L.divIcon({ className: "", html:
+    `<div style="color:#7f95aa;font-size:11px;letter-spacing:.08em;white-space:nowrap;text-transform:uppercase">${name}</div>` }) })
+   .addTo(map));
+
+const groups = {};
+const hidden = new Set();
+
+function drawLegend(counts) {
+  const el = document.getElementById("legend");
+  el.innerHTML = "";
+  Object.entries(COLORS).forEach(([sp, c]) => {
+    const row = document.createElement("div");
+    row.className = "row" + (hidden.has(sp) ? " off" : "");
+    row.innerHTML = `<span class="dot" style="background:${c}"></span><em>${sp.replace("Anolis", "A.")}</em><span class="count">${counts[sp] || 0}</span>`;
+    row.onclick = () => {
+      hidden.has(sp) ? hidden.delete(sp) : hidden.add(sp);
+      if (groups[sp]) hidden.has(sp) ? map.removeLayer(groups[sp]) : groups[sp].addTo(map);
+      drawLegend(counts);
+    };
+    el.appendChild(row);
+  });
+}
+
+fetch("data/occurrences.geojson")
+  .then(r => r.json())
+  .then(gj => {
+    const counts = {};
+    gj.features.forEach(f => {
+      const sp = f.properties.taxon;
+      counts[sp] = (counts[sp] || 0) + 1;
+      groups[sp] ??= L.layerGroup().addTo(map);
+      const [lon, lat] = f.geometry.coordinates;
+      const p = f.properties;
+      L.circleMarker([lat, lon], {
+        radius: 4, color: "#0b1622", weight: 1, fillColor: COLORS[sp] || "#ccc", fillOpacity: .85,
+      }).bindPopup(`<b><i>${p.scientificName || sp}</i></b><br>${p.date || "date unknown"} · ${p.basis || ""}<br>
+        <a href="https://www.gbif.org/occurrence/${p.gbifID}" target="_blank">GBIF record ↗</a>`)
+        .addTo(groups[sp]);
+    });
+    drawLegend(counts);
+    const upd = gj.metadata?.updated;
+    document.getElementById("status").textContent = gj.features.length
+      ? `${gj.features.length} records · updated ${upd ? upd.slice(0, 10) : "?"}`
+      : "No data yet — run the “Update occurrences” workflow in the Actions tab.";
+  })
+  .catch(() => { drawLegend({}); document.getElementById("status").textContent = "Couldn't load data/occurrences.geojson."; });
+</script>
+</body>
+</html>

@@ -16,7 +16,8 @@ Inspired by spotting anoles near the *Death in Paradise* filming locations — a
 |---|---|
 | GBIF occurrence fetch (`src/fetch_occurrences.py`) | ✅ written — runs in GitHub Actions |
 | Weekly auto-update workflow | ✅ wired |
-| Leaflet map (`docs/index.html`) | ✅ basic — colors points by species |
+| Story page (`docs/index.html`) — "Six islands, six lizards" | ✅ reads live data, falls back to a snapshot |
+| Leaflet explorer map (`docs/map.html`) | ✅ basic — colors points by species |
 | iNaturalist research-grade fetch | ⬜ next |
 | Sentinel-2 land cover per islet (Earth Engine) | ⬜ later |
 | Islet explainer panel ("why these rocks made new species") | ⬜ later |
