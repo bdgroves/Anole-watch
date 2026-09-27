@@ -42,6 +42,7 @@
     <h2>Species (click to toggle)</h2>
     <div id="legend"></div>
     <div class="note" id="status">Loading occurrences…</div>
+    <div class="note">Hollow dashed circles are records set aside by quality checks: parked on the island centroid, or outside the species' home island. Counts exclude them.</div>
     <div class="note">Occurrence data: <a style="color:var(--teal)" href="https://www.gbif.org">GBIF</a>, refreshed weekly by GitHub Actions. Sentinel-2 habitat layer coming soon.</div>
   </aside>
   <div id="map"></div>
@@ -100,13 +101,16 @@ fetch("data/occurrences.geojson")
     const counts = {};
     gj.features.forEach(f => {
       const sp = f.properties.taxon;
-      counts[sp] = (counts[sp] || 0) + 1;
+      const flag = f.properties.qa;
+      if (!flag) counts[sp] = (counts[sp] || 0) + 1;
       groups[sp] ??= L.layerGroup().addTo(map);
       const [lon, lat] = f.geometry.coordinates;
       const p = f.properties;
-      L.circleMarker([lat, lon], {
-        radius: 4, color: "#0b1622", weight: 1, fillColor: COLORS[sp] || "#ccc", fillOpacity: .85,
-      }).bindPopup(`<b><i>${p.scientificName || sp}</i></b><br>${p.date || "date unknown"} · ${p.basis || ""}<br>
+      const FLAG = { centroid: "⚠ parked on the Guadeloupe centroid (no real locality)", "off-island": "⚠ outside this species' home island (likely georeferencing error)" };
+      L.circleMarker([lat, lon], flag
+        ? { radius: 4, color: COLORS[sp] || "#ccc", weight: 1.5, fill: false, opacity: .7, dashArray: "2 2" }
+        : { radius: 4, color: "#0b1622", weight: 1, fillColor: COLORS[sp] || "#ccc", fillOpacity: .85 }
+      ).bindPopup(`<b><i>${p.scientificName || sp}</i></b><br>${p.date || "date unknown"} · ${p.basis || ""}<br>${flag ? FLAG[flag] + "<br>" : ""}
         <a href="https://www.gbif.org/occurrence/${p.gbifID}" target="_blank">GBIF record ↗</a>`)
         .addTo(groups[sp]);
     });

@@ -20,9 +20,16 @@ Inspired by spotting anoles near the *Death in Paradise* filming locations — a
 | Weekly auto-update workflow | ✅ wired |
 | Story page (`docs/index.html`) — "Six islands, six lizards" | ✅ reads live data, falls back to a snapshot |
 | Leaflet explorer map (`docs/map.html`) | ✅ basic — colors points by species |
-| iNaturalist research-grade fetch | ⬜ next |
+| Quality flags: centroid-parked and off-island records flagged, shown hollow on the map, left out of counts | ✅ |
+| iNaturalist | ✅ already covered: iNat research-grade observations flow into GBIF |
 | Sentinel-2 land cover per islet (Earth Engine) | ⬜ later |
 | Islet explainer panel ("why these rocks made new species") | ⬜ later |
+
+## Data quality notes
+
+- **The centroid problem.** 69 records sit exactly on 16.20 N, 61.54 W, a generic "somewhere in Guadeloupe" point that records fall back to when nobody wrote down an exact locality. They're flagged `centroid`.
+- **Two islands called Terre-de-Haut.** Petite Terre's islets are Terre-de-Haut and Terre-de-Bas, the same names as the main islands of Les Saintes. Some *A. chrysops* (Petite Terre) records were placed on Les Saintes, 60 km away. Island endemics recorded outside their home island are flagged `off-island`.
+- Re-apply flags without refetching: `python src/fetch_occurrences.py --reflag`
 
 ## Target taxa
 
@@ -31,8 +38,8 @@ Inspired by spotting anoles near the *Death in Paradise* filming locations — a
 | *Anolis marmoratus* | Basse-Terre / Grande-Terre (many subspecies) |
 | *Anolis ferreus* | Marie-Galante |
 | *Anolis terraealtae* | Les Saintes (Terre-de-Haut / Terre-de-Bas) |
-| *Anolis kahouannensis* | Îlet Kahouanne |
-| *Anolis chrysops* | Petite Terre |
+| *Anolis kahouannensis* | Îlet à Kahouanne + Tête à l'Anglais |
+| *Anolis chrysops* | Petite Terre (its islets are also named Terre-de-Haut / Terre-de-Bas) |
 | *Anolis desiradei* | La Désirade |
 
 Names follow the current split; GBIF may still file some records under *A. marmoratus* subspecies — the fetch script keeps the raw `scientificName` so we can sort that out later.
