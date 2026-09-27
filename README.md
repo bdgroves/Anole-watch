@@ -6,7 +6,7 @@ ANOLE-WATCH maps the *Anolis marmoratus* species complex across Guadeloupe's mai
 
 Inspired by spotting anoles near the *Death in Paradise* filming locations — and by NatGeo's August 2026 island-evolution coverage.
 
-**🌐 Live site: [bdgroves.github.io/Anole-watch](https://bdgroves.github.io/Anole-watch/)** · [explorer map](https://bdgroves.github.io/Anole-watch/map.html)
+**🌐 Live site: [bdgroves.github.io/Anole-watch](https://bdgroves.github.io/Anole-watch/)** · [explorer map](https://bdgroves.github.io/Anole-watch/map.html) · 📝 [Six Islands, Six Lizards](https://brooksgroves.com/blog/six-islands-six-lizards.html)
 
 > Part of the GeoAI & Remote Sensing Lab · sibling of [ALPINE-WATCH](https://github.com/bdgroves/Alpine-watch)
 
